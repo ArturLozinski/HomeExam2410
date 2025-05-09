@@ -47,7 +47,7 @@ def server(ip, port):
         if syn:
             print("SYN packet is recieved")
             response_flags = (1 << 3) | (1 << 2) # SYN-ACK
-            server_socket.sendto(create_packet(0, seq, response_flags, 15))
+            server_socket.sendto(create_packet(0, seq, response_flags, 15), client_address)
             print("SYN-ACK packet is sent")
         elif ack: 
             print("ACK packet is recieved")
@@ -64,7 +64,8 @@ def server(ip, port):
             total_data_recieved += len(message) - HEADER_SIZE
             print(f"{current_time()} -- packet {seq} received")
             response_flags = (1 << 2) # ACk
-            server_socket.sendto(create_packet(0, seq, flags, 0), client_address)
+            ack_packet = create_packet(0, seq, response_flags, 0)
+            server_socket.sendto(ack_packet, client_address)
             print(f"{current_time()} sending ACK for the recieved {seq}")
 
     throughput_time = time.time() - throughput_start_time
@@ -100,7 +101,7 @@ def client(ip, port, filename, window_size):
             else:
                 print("Unexpected response during handshake")
 
-        except timeout:
+        except socket.timeout as e:
             print("Timeout waiting for SYN-ACK, retrying...")
             attempt += 1
 
@@ -130,15 +131,15 @@ def client(ip, port, filename, window_size):
                 _, ack_flag, _ = parse_flags(response_flags)
 
                 if ack_flag:
-                    print(f"{time.strftime('%H:%M:%S')} -- ACK for packet={ack_num} received")
+                    print(f"{current_time()} -- ACK for packet={ack_num} received")
                     base = ack_num + 1
                     packets = [pkt for pkt in packets if parse_header(pkt[:HEADER_SIZE])[0] >= base]
-            except socket.timeout:
-                print("Timeout: Resending unacknowledged packets")
+            except (socket.timeout, TimeoutError) as e:
+                print(f"Timeout occurred: {e}")
                 for pkt in packets:
                     seq_num, _, _, _ = parse_header(pkt[:HEADER_SIZE])
                     client_socket.sendto(pkt, (ip, port))
-                    print(f"{time.strftime('%H:%M:%S')} -- Resent packet seq={seq_num}")
+                    print(f"{current_time()} -- Resent packet seq={seq_num}")
 
             if base == seq and not packets:
                 break
@@ -192,7 +193,8 @@ def main():
         if not args.file:
             print("Client mode requires --file argument.")
             sys.exit(1)
-        client(args.ip, args.port, args.file, args.window)
+        else:
+            client(args.ip, args.port, args.file, args.window)
 
 if __name__ == '__main__':
     main()
