@@ -68,10 +68,13 @@ def server(ip, port):
             server_socket.sendto(ack_packet, client_address)
             print(f"{current_time()} sending ACK for the recieved {seq}")
 
-    throughput_time = time.time() - throughput_start_time
-    throughput = (total_data_recieved * 8) / throughput_time / 1_000_000 # Mbps
-    print("The througput is {throughput:.2f} Mbps")
-    print("Connection closes")
+    if throughput_start_time is not None:
+        throughput_time = time.time() - throughput_start_time
+        throughput = (total_data_recieved * 8) / throughput_time / 1_000_000  # Mbps
+        print(f"The throughput is {throughput:.2f} Mbps")
+    else:
+        print("No data was transferred, can't calculate throughput")
+        print("Connection closes")
 
 def client(ip, port, filename, window_size):
     client_socket = socket(AF_INET, SOCK_DGRAM)
@@ -134,7 +137,7 @@ def client(ip, port, filename, window_size):
                     print(f"{current_time()} -- ACK for packet={ack_num} received")
                     base = ack_num + 1
                     packets = [pkt for pkt in packets if parse_header(pkt[:HEADER_SIZE])[0] >= base]
-            except (socket.timeout, TimeoutError) as e:
+            except timeout as e:
                 print(f"Timeout occurred: {e}")
                 for pkt in packets:
                     seq_num, _, _, _ = parse_header(pkt[:HEADER_SIZE])
@@ -166,7 +169,7 @@ def client(ip, port, filename, window_size):
             else:
                 print("Unexpected response during teardown")
 
-        except socket.timeout:
+        except timeout as e:
             print("Timeout waiting for FIN-ACK, retrying...")
             attempt += 1
 
