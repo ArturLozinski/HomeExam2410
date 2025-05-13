@@ -85,8 +85,11 @@ def server(ip, port, discard_seq=None):
     total_data_received = 0
     expected_seq = 1
     discard_done = False
+    # Or to write directly to file:
+    output_file = open("received_file", "wb")
 
     while True:
+        print('Receiving')
         message, client_address = server_socket.recvfrom(PACKET_SIZE)
         seq, ack, flags, win = parse_header(message[:HEADER_SIZE])
         syn_flag, ack_flag, fin_flag = parse_flags(flags)
@@ -122,7 +125,13 @@ def server(ip, port, discard_seq=None):
             
             # Process in-order packets
             if seq == expected_seq:
-                total_data_received += len(message) - HEADER_SIZE
+                #total_data_received += len(message) - HEADER_SIZE
+                payload = message[HEADER_SIZE:]  # Extract application data
+                total_data_received += len(payload)
+
+                # Option 2: write directly to file (preferred for large files)
+                output_file.write(payload)
+
                 print(f"{current_time()} -- packet {seq} is received")
                 response_flags = ACK_FLAG
                 ack_packet = create_packet(0, seq, response_flags, 0)
@@ -141,6 +150,9 @@ def server(ip, port, discard_seq=None):
     else:
         print("No data was transferred, can't calculate throughput")
     
+    # using direct file writing
+    output_file.close()
+
     print("Connection Closes")
 
 def client(ip, port, filename, window_size):
@@ -171,7 +183,7 @@ def client(ip, port, filename, window_size):
             else:
                 print("Unexpected response during handshake")
 
-        except socket.timeout as e:
+        except timeout as e:
             print("Timeout waiting for SYN-ACK, retrying...")
             attempt += 1
 

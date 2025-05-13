@@ -123,6 +123,7 @@ def server(ip, port, discard_seq=None):
             # Process in-order packets
             if seq == expected_seq:
                 total_data_received += len(message) - HEADER_SIZE
+                
                 print(f"{current_time()} -- packet {seq} is received")
                 response_flags = ACK_FLAG
                 ack_packet = create_packet(0, seq, response_flags, 0)
