@@ -29,7 +29,7 @@ class NetworkTopo( Topo ):
         self.addLink(r,h2,params1={ 'ip' : '10.0.1.1/24' },params2={ 'ip' : '10.0.1.2/24' }) #, bw=100, delay='25ms')#, max_queue_size=834, use_htb=True)
 
 topo = NetworkTopo()
-net = Mininet( topo=topo, link=TCLink, controller=NullController )
+net = Mininet( topo=topo, link=TCLink, controller=None )
 net.start()
 
 #ip route add ipA via ipB dev INTERFACE
