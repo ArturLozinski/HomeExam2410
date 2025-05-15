@@ -85,11 +85,11 @@ def server(ip, port, discard_seq=None):
     total_data_received = 0
     expected_seq = 1
     discard_done = False
-    # Or to write directly to file:
+    # Write incoming file directly to file:
     output_file = open("received_file", "wb")
 
     while True:
-        print('Receiving')
+        print('Receiving') # For debugging purposes
         message, client_address = server_socket.recvfrom(PACKET_SIZE)
         seq, ack, flags, win = parse_header(message[:HEADER_SIZE])
         syn_flag, ack_flag, fin_flag = parse_flags(flags)
@@ -105,10 +105,12 @@ def server(ip, port, discard_seq=None):
         elif ack_flag and not syn_flag and not fin_flag and throughput_start_time is None:
             print("ACK packet is received")
             throughput_start_time = time.time()
+            print("Througput start time: {throughput_start_time}")
             print("Connection established")
         
         # Connection teardown
         elif fin_flag:
+            print("tIME IS: ",throughput_start_time)
             print("FIN packet is received")
             response_flags = ACK_FLAG | FIN_FLAG  # FIN-ACK
             server_socket.sendto(create_packet(0, seq, response_flags, 0), client_address)
@@ -129,7 +131,7 @@ def server(ip, port, discard_seq=None):
                 payload = message[HEADER_SIZE:]  # Extract application data
                 total_data_received += len(payload)
 
-                # Option 2: write directly to file (preferred for large files)
+                # Writes received data directly to file
                 output_file.write(payload)
 
                 print(f"{current_time()} -- packet {seq} is received")
