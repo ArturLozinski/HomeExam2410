@@ -86,7 +86,7 @@ def server(ip, port, discard_seq=None):
     expected_seq = 1
     discard_done = False
     # Writes incoming file directly to file:
-    #output_file = open("received_file", "wb")
+    output_file = open("received_file", "wb")
 
     while True:
         print('Receiving') # For debugging purposes
@@ -107,18 +107,6 @@ def server(ip, port, discard_seq=None):
             throughput_start_time = time.time()
             print("Througput start time: {throughput_start_time}")
             print("Connection established")
-
-            # Receive filename from client after handshake
-            filename_packet, client_address = server_socket.recvfrom(PACKET_SIZE)
-            _, _, _, _ = parse_header(filename_packet[:HEADER_SIZE])
-            filename = filename_packet[HEADER_SIZE:].decode().strip()
-
-            try:
-                output_file = open(filename, "wb")
-            except Exception as e:
-                print(f"Error opening file '{filename}' for writing: {e}")
-                server_socket.close()
-                return
         
         # Connection teardown
         elif fin_flag:
@@ -164,8 +152,8 @@ def server(ip, port, discard_seq=None):
     else:
         print("No data was transferred, can't calculate throughput")
     
-    if 'output_file' in locals() and output_file:
-        output_file.close()
+    # using direct file writing
+    output_file.close()
 
     print("Connection Closes")
 
@@ -206,12 +194,6 @@ def client(ip, port, filename, window_size):
                 print("ACK packet is sent")
                 print("Connection established successfully")
                 connected = True
-
-                # Send filename to server
-                filename_bytes = filename.encode()
-                filename_packet = create_packet(0, 0, 0, 0, filename_bytes)
-                client_socket.sendto(filename_packet, (ip, port))
-                print(f"Filename '{filename}' sent to server.")
 
             else:
                 print("Unexpected response during handshake")
