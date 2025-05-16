@@ -85,7 +85,7 @@ def server(ip, port, discard_seq=None):
     total_data_received = 0
     expected_seq = 1
     discard_done = False
-    # Write incoming file directly to file:
+    # Writes incoming file directly to file:
     output_file = open("received_file", "wb")
 
     while True:
@@ -98,7 +98,7 @@ def server(ip, port, discard_seq=None):
         if syn_flag and not ack_flag:
             print("SYN packet is received")
             response_flags = SYN_FLAG | ACK_FLAG  # SYN-ACK
-            server_socket.sendto(create_packet(0, seq, response_flags, 15), client_address)
+            server_socket.sendto(create_packet(0, seq, response_flags, 15), client_address) # Maximum window size = 15
             print("SYN-ACK packet is sent")
         
         # Connection acknowledgment
@@ -230,7 +230,7 @@ def client(ip, port, filename, window_size):
                     print(f"{current_time()} -- ACK for packet={ack_num} received")
                     base = ack_num + 1
                     packets = [pkt for pkt in packets if parse_header(pkt[:HEADER_SIZE])[0] >= base]
-                    
+
             except timeout as e:
                 print(f"Timeout occurred: {e}")
                 for pkt in packets:
