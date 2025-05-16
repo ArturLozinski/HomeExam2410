@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 
-# Data from your table
+# Data from testing
 window_sizes = [3, 5, 10, 15, 20, 25]
 throughputs = [0.1, 0.11, 0.16, 0.25, 0.27, 0.2]
 
-# Plot configuration
+# configuration
 plt.figure(figsize=(8, 5))
 plt.plot(window_sizes, throughputs, marker='o', linestyle='-', color='blue', label='Throughput')
 
@@ -16,6 +16,6 @@ plt.grid(True)
 plt.xticks(window_sizes)  # Ensure all x-values are labeled
 plt.legend()
 
-# Show the plot
+# plot
 plt.tight_layout()
 plt.show()

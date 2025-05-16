@@ -158,6 +158,18 @@ def server(ip, port, discard_seq=None):
     print("Connection Closes")
 
 def client(ip, port, filename, window_size):
+    """
+    Implements client upon use of -c option. The client side implements Go-Back-N protocol with retry 
+    logic on handshake, N packets in flight and retransmission on timeout.
+
+    The client consists of Connection establishment phase, data tranfer and connection teardown. 
+
+    Arguments from terminal side:
+    - ip-address
+    - port
+    - file to transfer
+    - window size
+    """
     client_socket = socket(AF_INET, SOCK_DGRAM)
     client_socket.settimeout(TIMEOUT)
 
@@ -202,7 +214,7 @@ def client(ip, port, filename, window_size):
         window = min(window_size, win)
 
         while True:
-            while len(packets) < window and (data := f.read(DATA_SIZE)):
+            while len(packets) < window and (data := f.read(DATA_SIZE)): # N packets in flight part of the Go-Back_n protocol
                 packet = create_packet(seq, 0, 0, 0, data)
                 packets.append(packet)
                 client_socket.sendto(packet, (ip, port))
@@ -218,6 +230,7 @@ def client(ip, port, filename, window_size):
                     print(f"{current_time()} -- ACK for packet={ack_num} received")
                     base = ack_num + 1
                     packets = [pkt for pkt in packets if parse_header(pkt[:HEADER_SIZE])[0] >= base]
+                    
             except timeout as e:
                 print(f"Timeout occurred: {e}")
                 for pkt in packets:
