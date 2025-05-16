@@ -7,8 +7,8 @@ from datetime import datetime
 import sys
 
 # Constants
-HEADER_FORMAT = '!HHHH'  # Sequence Number, Acknowledgment Number, Flags, Receiver Window
-HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
+HEADER_FORMAT = '!HHHH'  # ! is the network byte order and H = 2 bytes. Represents Sequence Number, Acknowledgment Number, Flags, Receiver Window
+HEADER_SIZE = struct.calcsize(HEADER_FORMAT) # Calculates number of bytes header will occupy: HHHH = 8 bytes
 DATA_SIZE = 992  # Application data size
 PACKET_SIZE = DATA_SIZE + HEADER_SIZE  # Total packet size
 TIMEOUT = 0.4  # 400ms timeout for retransmission
@@ -86,7 +86,7 @@ def server(ip, port, discard_seq=None):
     expected_seq = 1
     discard_done = False
     # Writes incoming file directly to file:
-    output_file = open("received_file", "wb")
+    #output_file = open("received_file", "wb")
 
     while True:
         print('Receiving') # For debugging purposes
@@ -107,6 +107,18 @@ def server(ip, port, discard_seq=None):
             throughput_start_time = time.time()
             print("Througput start time: {throughput_start_time}")
             print("Connection established")
+
+            # Receive filename from client after handshake
+            filename_packet, client_address = server_socket.recvfrom(PACKET_SIZE)
+            _, _, _, _ = parse_header(filename_packet[:HEADER_SIZE])
+            filename = filename_packet[HEADER_SIZE:].decode().strip()
+
+            try:
+                output_file = open(filename, "wb")
+            except Exception as e:
+                print(f"Error opening file '{filename}' for writing: {e}")
+                server_socket.close()
+                return
         
         # Connection teardown
         elif fin_flag:
@@ -152,8 +164,8 @@ def server(ip, port, discard_seq=None):
     else:
         print("No data was transferred, can't calculate throughput")
     
-    # using direct file writing
-    output_file.close()
+    if 'output_file' in locals() and output_file:
+        output_file.close()
 
     print("Connection Closes")
 
@@ -194,6 +206,13 @@ def client(ip, port, filename, window_size):
                 print("ACK packet is sent")
                 print("Connection established successfully")
                 connected = True
+
+                # Send filename to server
+                filename_bytes = filename.encode()
+                filename_packet = create_packet(0, 0, 0, 0, filename_bytes)
+                client_socket.sendto(filename_packet, (ip, port))
+                print(f"Filename '{filename}' sent to server.")
+
             else:
                 print("Unexpected response during handshake")
 
