@@ -7,7 +7,7 @@ from datetime import datetime
 import sys
 
 # Constants
-HEADER_FORMAT = '!IIHH'  # Sequence Number, Acknowledgment Number, Flags, Receiver Window
+HEADER_FORMAT = '!HHHH'  # Sequence Number, Acknowledgment Number, Flags, Receiver Window
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 DATA_SIZE = 992  # Application data size
 PACKET_SIZE = DATA_SIZE + HEADER_SIZE  # Total packet size
